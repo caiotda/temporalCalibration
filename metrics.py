@@ -13,7 +13,7 @@ def MRR(users, recs, ground_truth):
     """
     rr_s = 0
     for userId in users:
-        recs_user = list(recs[recs["userId"] == userId].values())
+        recs_user = list(recs[recs["userId"] == userId].itemId.values())
         ground_truth_user = list(ground_truth[ground_truth["userId"] == userId].values())
         rr_s += rr(recs_user, ground_truth)
     n_users = len(users)
