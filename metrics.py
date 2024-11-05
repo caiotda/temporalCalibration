@@ -1,3 +1,18 @@
+from scipy.stats import entropy
+
+def KL(p, q):
+    """
+        ins:
+            - p (list) representing a probability distribution
+            - q (list): another probability distribution
+
+        out:
+            kl (float): the KL divergence between p and q
+    """
+
+    return  entropy(p,q)
+
+
 def MRR(users, recs, ground_truth):
     """
         ins: 
