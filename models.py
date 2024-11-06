@@ -16,9 +16,10 @@ class SVDpp:
         self.lr = lr
         self.reg = reg
         self.n_epochs = n_epochs
-        self.global_mean = train_set['rating'].mean()
-        self.n_users = len(train_set['userId'].unique())
-        self.n_items = len(train_set['movieId'].unique())
+        self.global_mean = self.train_set['rating'].mean()
+
+        self.n_users = self.train_set['userId'].max() + 1
+        self.n_items = self.train_set['movieId'].max() + 1
         self.bu = np.zeros(self.n_users)  # User biases
         self.bi = np.zeros(self.n_items)  # Item biases
         self.p = np.random.normal(0.1, 0.1, (self.n_users, n_factors))  # Users factor matrix
@@ -34,7 +35,7 @@ class SVDpp:
 
     def eta(self, u):
         """
-        Given a userId u, calculates the amount of 
+        Given a userId u, calculates the amount of
         items the user has interacted with
         """
         return len(self._interacted(u))
@@ -74,8 +75,8 @@ class SVDpp:
             for index, row in self.train_set.iterrows():
                 if j % 1000 == 0:
                     print(f"Iteration {j} of {len(self.train_set)}: ({100 * (j / len(self.train_set)):.2f}%)")
-                u = row['userId']
-                i = row['movieId']
+                u = int(row['userId'])
+                i = int(row['movieId'])
                 implicit_term_u, eta_u = self.get_implicit_term(u)
                 modified_user_factor = self.p[u] + implicit_term_u
 
