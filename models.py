@@ -5,9 +5,12 @@ from utils import load, save
 
 
 class SVDpp:
-    def __init__(self, train_set, test_set, output_path, n_factors, lr=0.05, reg=0.02, n_epochs=10):
-        self.train_set = load(train_set)
-        self.test_set = load(test_set)
+    def __init__(self, train_file, test_file, output_path, n_factors, lr=0.05, reg=0.02, n_epochs=10, random_seed=42):
+
+        np.random.seed(random_seed)
+
+        self.train_set = load(train_file)
+        self.test_set = load(train_file)
         self.n_factors = n_factors
         self.output_path = output_path
         self.lr = lr
