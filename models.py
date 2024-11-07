@@ -7,7 +7,7 @@ from utils import load, save
 class SVDpp:
     def __init__(self, train_file, test_file, output_path, n_factors, lr=0.05, reg=0.02, n_epochs=10, random_seed=42):
 
-        np.random.seed(random_seed)
+        np.random.seed(random_seed) 
 
         self.train_set = load(train_file)
         self.test_set = load(train_file)
@@ -18,8 +18,8 @@ class SVDpp:
         self.n_epochs = n_epochs
         self.global_mean = self.train_set['rating'].mean()
 
-        self.n_users = self.train_set['userId'].max() + 1
-        self.n_items = self.train_set['movieId'].max() + 1
+        self.n_users = int(self.train_set['userId'].max() + 1)
+        self.n_items = int(self.train_set['movieId'].max() + 1)
         self.bu = np.zeros(self.n_users)  # User biases
         self.bi = np.zeros(self.n_items)  # Item biases
         self.p = np.random.normal(0.1, 0.1, (self.n_users, n_factors))  # Users factor matrix
@@ -35,7 +35,7 @@ class SVDpp:
 
     def eta(self, u):
         """
-        Given a userId u, calculates the amount of
+        Given a userId u, calculates the amount of 
         items the user has interacted with
         """
         return len(self._interacted(u))
@@ -59,7 +59,10 @@ class SVDpp:
         implicit_sum = 0
         for movieId in movies_interacted:
             implicit_sum += self.p[movieId]
-        return implicit_sum / math.sqrt(eta_u), eta_u
+
+        if eta_u > 0:
+            return implicit_sum / math.sqrt(eta_u), eta_u
+        return 0
 
     def predict(self, u, i):
         modified_user_factor = self.p[u] + self.implicit_factor[u]
@@ -92,9 +95,12 @@ class SVDpp:
                 j += 1
                 for f in range(self.n_factors):
                     temp_uf = self.p[u][f]
-
-                    self.implicit_factor[u][f] = self.implicit_factor[u][f] + self.lr * (
-                            (e_ui * self.q[i][f] / math.sqrt(eta_u)) - self.reg * self.implicit_factor[u][f])
+                    if eta_u > 0:
+                        self.implicit_factor[u][f] = self.implicit_factor[u][f] + self.lr * (
+                                (e_ui * self.q[i][f] / math.sqrt(eta_u)) - self.reg * self.implicit_factor[u][f])
+                    else:
+                        # Don't update the implicit factor if user has not interacted to any item
+                        pass
                     self.p[u][f] = self.p[u][f] + self.lr * (e_ui * self.q[i][f] - self.reg * self.p[u][f])
                     self.q[i][f] = self.q[i][f] + self.lr * (e_ui * temp_uf - self.reg * self.q[i][f])
             error.append(math.sqrt(sq_error / len(self.train_set)))
