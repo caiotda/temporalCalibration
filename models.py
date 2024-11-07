@@ -5,9 +5,9 @@ from utils import load, save
 
 
 class SVDpp:
-    def __init__(self, train_file, test_file, output_path, n_factors, lr=0.05, reg=0.02, n_epochs=10, random_seed=42):
+    def __init__(self, train_file, test_file, output_path, n_factors, lr=0.05, reg=0.02, n_epochs=10, random_seed=42, params=None):
 
-        np.random.seed(random_seed) 
+        np.random.seed(random_seed)
 
         self.train_set = load(train_file)
         self.test_set = load(train_file)
@@ -20,11 +20,19 @@ class SVDpp:
 
         self.n_users = int(self.train_set['userId'].max() + 1)
         self.n_items = int(self.train_set['movieId'].max() + 1)
-        self.bu = np.zeros(self.n_users)  # User biases
-        self.bi = np.zeros(self.n_items)  # Item biases
-        self.p = np.random.normal(0.1, 0.1, (self.n_users, n_factors))  # Users factor matrix
-        self.q = np.random.normal(0.1, 0.1, (self.n_items, n_factors))  # Items factor matrix
-        self.implicit_factor = np.random.normal(0.1, 0.1, (self.n_users, n_factors))  # Implicit feedback factors
+
+        if params is None:
+          self.bu = np.zeros(self.n_users)  # User biases
+          self.bi = np.zeros(self.n_items)  # Item biases
+          self.p = np.random.normal(0.1, 0.1, (self.n_users, n_factors))  # Users factor matrix
+          self.q = np.random.normal(0.1, 0.1, (self.n_items, n_factors))  # Items factor matrix
+          self.implicit_factor = np.random.normal(0.1, 0.1, (self.n_users, n_factors))  # Implicit feedback factors
+        else:
+          self.bu = params['bu']
+          self.bi = params['bi']
+          self.p = params['p']
+          self.q = params['q']
+          self.implicit_factor = params['imp_y']
 
     def _interacted(self, u):
         """
@@ -35,7 +43,7 @@ class SVDpp:
 
     def eta(self, u):
         """
-        Given a userId u, calculates the amount of 
+        Given a userId u, calculates the amount of
         items the user has interacted with
         """
         return len(self._interacted(u))
@@ -69,6 +77,26 @@ class SVDpp:
         predict = self.global_mean + self.bu[u] + self.bi[i] + np.dot(modified_user_factor, self.q[i])
         return predict
 
+    def score_test(self):
+        # Add the prediction column to the copied DataFrame
+        test_df_with_predictions = self.test_set.copy()
+        predictions = []
+        for index, row in self.test_set.iterrows():
+            user_id = int(row['userId'])
+            movie_id = int(row['movieId'])
+
+            prediction = self.predict(user_id, movie_id)
+
+            predictions.append(prediction)
+        test_df_with_predictions['prediction'] = predictions    
+        test_df_with_predictions.to_csv(
+            self.output_path,
+            index=False,
+            header=False,
+            sep='\t')
+      
+
+      
     def train(self):
         error = []
         for t in range(self.n_epochs):
