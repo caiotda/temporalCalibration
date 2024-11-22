@@ -1,4 +1,11 @@
 from scipy.stats import entropy
+import numpy as np
+
+RATING_COL = "rating"
+USER_COL = "userId"
+ITEM_COL = "movieId"
+
+
 
 def KL(p, q):
     """
@@ -95,8 +102,8 @@ def NDCG(userId, recs, ground_truth, k=10):
             NDCG for the recommendations generated for the user
     """
 
-    user_recs = list(recs[recs["userId"] == userId].itemId.values())
-    user_ground_truth = list(ground_truth[ground_truth["userId"] == userId].itemId.values())
+    user_recs = list(recs[recs[USER_COL] == userId][ITEM_COL])[:k]
+    user_ground_truth = list(ground_truth[ground_truth[USER_COL] == userId][ITEM_COL])[:k]
     u_dcg = DCG(user_recs, user_ground_truth)
     i_dcg = DCG(user_ground_truth, user_ground_truth)
 
