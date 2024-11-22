@@ -155,7 +155,7 @@ def calculate_calibration_sum(profile_dist, temporary_list_with_score, user, gen
     return kl_div
 
 
-def get_recommendation_fairness(model, test, lambda_=0.9, calibration_mode='exponential'):
+def get_recommendation_fairness(model, test, sample_size=None, lambda_=0.9, calibration_mode='exponential'):
     df_genres  = test[["movieId", "genres"]].drop_duplicates()
 
     genre_map = {i['movieId']:i['genres'].split("|") for i in df_genres[['movieId', 'genres']].to_dict('records')}
@@ -163,7 +163,7 @@ def get_recommendation_fairness(model, test, lambda_=0.9, calibration_mode='expo
     full_df = pd.DataFrame(columns=["userId", "movieId", "predicted_rating"])
     movies_ids = list(set(test["movieId"].unique()))
     print(f"calibrating using {calibration_mode}")
-    for user in tqdm.tqdm(test[USER_COL].unique()[:200]):
+    for user in tqdm.tqdm(test[USER_COL].unique()[:sample_size]):
 
         user_profile_distribution = get_user_profile_distribution(test, user, weight=calibration_mode)
 
@@ -245,8 +245,9 @@ def get_mean_rank_miscalibration(predictions_df, test, genre_map, calibrate=None
 
 
 
-def evaluate(model, test):
-
+def evaluate(model, test, sample_size=None):
+    if sample_size is None:
+        sample_size = len(test)
     df_genres  = test[["movieId", "genres"]].drop_duplicates()
     genre_map = {i['movieId']:i['genres'].split("|") for i in df_genres[['movieId', 'genres']].to_dict('records')}
 
@@ -254,13 +255,13 @@ def evaluate(model, test):
     calibrated_metrics = {}
     calibrations = ['classic', 'rating', 'rational', 'exponential']
     print("Generating baseline recommendations...")
-    baseline_recs = get_recommendation_raw(model, test)
+    baseline_recs = get_recommendation_raw(model, test, sample_size=sample_size)
     print("Done!")
     baseline_metrics['ndcg'] = avg_ndcg(baseline_recs, test)
     baseline_metrics['mmr'] = get_mean_rank_miscalibration(baseline_recs, test, genre_map=genre_map, calibrate=None)
     for calibration_mode in calibrations:
         print("Generating calibrated recommendations...")
-        fairness_recs = get_recommendation_fairness(model, test, calibration_mode=calibration_mode)
+        fairness_recs = get_recommendation_fairness(model, test, calibration_mode=calibration_mode, sample_size=sample_size)
         print("Done!")
 
         calibrated_metrics[calibration_mode] = {}

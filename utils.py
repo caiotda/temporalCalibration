@@ -17,14 +17,16 @@ def save(df, path):
     df.to_csv(path, index=False, header=False, sep='\t')
 
 
-def get_recommendation_raw(model, test, top_k=10):
+def get_recommendation_raw(model, test, sample_size=None, top_k=10):
 
+    if sample_size is None:
+        sample_size = len(test)
     genres_df = test[["movieId", "genres"]].drop_duplicates()
     prediction_user_map = {}
     full_df = pd.DataFrame(columns=["userId", "movieId", "predicted_rating"])
     movies_ids = list(set(test["movieId"].unique()))
 
-    for user in tqdm.tqdm(test[USER_COL].unique()[:200]):
+    for user in tqdm.tqdm(test[USER_COL].unique()[:sample_size]):
         teste = pd.DataFrame({ITEM_COL: movies_ids, RATING_COL: 0.0, USER_COL: user})
 
         testset = (
