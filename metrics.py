@@ -70,34 +70,43 @@ def rel(itemId, ground_truth):
     return itemId in ground_truth
 
 
-def DCG(userRecs, ground_truth):
-    """ 
+def DCG(user_recs, ground_truth):
+    """
         ins:
             - userRecs: list
             - ground_truth: list
         out:
             DCG for the recommendations generated for the user
-    """ 
+    """
 
     dcg = 0
     for i, rec in enumerate(user_recs):
-        dcg += (2 ** rel(rec, ground_truth) - 1)   / np.log(i + 1)
+        dcg += rel(rec, ground_truth) / np.log2(i + 2)
     return dcg
 
 
-def NDCG(userId, recs, ground_truth):
-     """ 
+def NDCG(userId, recs, ground_truth, k=10):
+    """
         ins:
             - userId: (str)
             - recs: pd.DataFrame
             - ground_truth: pd.Dataframe
         out:
             NDCG for the recommendations generated for the user
-    """ 
+    """
 
     user_recs = list(recs[recs["userId"] == userId].itemId.values())
     user_ground_truth = list(ground_truth[ground_truth["userId"] == userId].itemId.values())
     u_dcg = DCG(user_recs, user_ground_truth)
-    i_dcg = DDG(user_ground_truth, user_ground_truth)
+    i_dcg = DCG(user_ground_truth, user_ground_truth)
 
     return u_dcg / i_dcg
+
+
+def avg_ndcg(recs, ground_truth):
+  ndcg = 0
+  for user in recs[USER_COL].unique():
+    ndcg += NDCG(user, recs, ground_truth)
+  return ndcg/len(recs[USER_COL].unique())
+
+
