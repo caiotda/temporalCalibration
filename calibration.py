@@ -217,6 +217,14 @@ def user_rank_miscalibration(user_profile_dist, rec_profile_dist, alpha=0.001):
             Ckl += p * np.log2(p / til_q)
     return Ckl
 
+def get_user_miscalibration(recs, test, user, alpha=0.001):
+    df_genres  = test[["movieId", "genres"]].drop_duplicates()
+    genre_map = {i['movieId']:i['genres'].split("|") for i in df_genres[['movieId', 'genres']].to_dict('records')}
+    user_profile_dist = get_user_profile_distribution(test, user)
+    user_rec_dist = get_gender_distribution_in_recommendation(recs, user, genre_map)
+
+    return user_rank_miscalibration(user_profile_dist, user_rec_dist, alpha=alpha)
+
 def get_mean_rank_miscalibration(predictions_df, test, genre_map, calibrate=None):
     MRMC = 0
 
