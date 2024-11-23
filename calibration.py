@@ -217,14 +217,17 @@ def user_rank_miscalibration(user_profile_dist, rec_profile_dist, alpha=0.001):
             Ckl += p * np.log2(p / til_q)
     return Ckl
 
-def get_user_miscalibration(recs, test, user, alpha=0.001):
+def get_user_miscalibration(recs, test, user, alpha=0.001, calibrate='classic'):
     df_genres  = test[["movieId", "genres"]].drop_duplicates()
     genre_map = {i['movieId']:i['genres'].split("|") for i in df_genres[['movieId', 'genres']].to_dict('records')}
-    user_profile_dist = get_user_profile_distribution(test, user)
+    user_profile_dist = get_user_profile_distribution(test, user, weight=calibrate)
     user_rec_dist = get_gender_distribution_in_recommendation(recs, user, genre_map)
 
     return user_rank_miscalibration(user_profile_dist, user_rec_dist, alpha=alpha)
 
+def get_avg_miscalibration(recs, test, alpha=0.001, calibrate='classic'):
+    miscalibrations = recs['userId'].apply(lambda x: get_user_miscalibration(recs, test, x, alpha=alpha, calibrate=calibrate))
+    return np.mean(miscalibrations)
 def get_mean_rank_miscalibration(predictions_df, test, genre_map, calibrate=None):
     MRMC = 0
 
@@ -267,6 +270,7 @@ def evaluate(model, test, sample_size=None):
     print("Done!")
     baseline_metrics['ndcg'] = avg_ndcg(baseline_recs, test)
     baseline_metrics['mmr'] = get_mean_rank_miscalibration(baseline_recs, test, genre_map=genre_map, calibrate=None)
+    baseline_metrics['avg_ck'] = get_avg_miscalibration(baseline_recs, test, calibrate='classic')
     for calibration_mode in calibrations:
         print("Generating calibrated recommendations...")
         fairness_recs = get_recommendation_fairness(model, test, calibration_mode=calibration_mode, sample_size=sample_size)
@@ -275,4 +279,5 @@ def evaluate(model, test, sample_size=None):
         calibrated_metrics[calibration_mode] = {}
         calibrated_metrics[calibration_mode]['ndcg'] = avg_ndcg(fairness_recs, test)
         calibrated_metrics[calibration_mode]['mmr'] = get_mean_rank_miscalibration(fairness_recs, test, genre_map=genre_map, calibrate=calibration_mode)
+        calibrated_metrics[calibration_mode]['avg_ck'] = get_avg_miscalibration(fairness_recs, test, calibrate=calibration_mode)
     return baseline_metrics, calibrated_metrics
