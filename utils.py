@@ -10,11 +10,17 @@ ITEM_COL = "movieId"
 
 reader = Reader(rating_scale = (0.5, 5.0))
 
-def load(path, columns=['userId', 'movieId', 'rating']):
-    return pd.read_csv(path, sep='\t', names=columns)
+UNKNOWN_GENRE = "(no genres listed)"
+
+def preprocess_genres(df, genre_col="genres"):
+    df["genres_list"] = df[genre_col].apply(lambda genre: genre.split("|") if genre != UNKNOWN_GENRE else None)
+    return df
+
+def load(path):
+    return pd.read_csv(path)
 
 def save(df, path):
-    df.to_csv(path, index=False, header=False, sep='\t')
+    df.to_csv(path, index=False)
 
 
 def get_recommendation_raw(model, test, sample_size=None, top_k=10):
