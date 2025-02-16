@@ -1,6 +1,6 @@
 # Movielens constants
 
-BASE_PATH = "datasets/movielens20m"
+BASE_PATH = "/content/drive/My Drive/datasets/movielens20m"
 FULL_PATH = f"{BASE_PATH}/full.csv"
 TRAIN_FEATURES_PATH = f"{BASE_PATH}/train_x.csv"
 TRAIN_TARGET_PATH = f"{BASE_PATH}/train_y.csv"
